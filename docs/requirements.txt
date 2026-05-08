@@ -1,0 +1,67 @@
+# Analog Gauge Inspection System - Python Dependencies
+# Created: May 8, 2026
+
+# ==========================================
+# CORE DEPENDENCIES
+# ==========================================
+# Image Processing and Computer Vision
+numpy>=1.20.0,<2.0
+opencv-python>=4.5.0
+pillow>=8.0.0
+
+# Deep Learning Framework
+torch>=1.9.0
+torchvision>=0.10.0
+
+# Object Detection and Segmentation (YOLOv8)
+ultralytics>=8.0.0
+
+# Configuration Management
+pyyaml>=5.4
+
+# ==========================================
+# OCR AND VISION
+# ==========================================
+# Optical Character Recognition
+doctr>=0.5.0
+
+# ==========================================
+# OPTIONAL DEPENDENCIES
+# ==========================================
+# For ONNX model support
+# onnx>=1.11.0
+# onnxruntime>=1.11.0
+
+# For TensorRT acceleration (NVIDIA GPU)
+# tensorrt>=8.0.0
+
+# ==========================================
+# DEVELOPMENT DEPENDENCIES (Optional)
+# ==========================================
+# Jupyter for interactive notebooks
+jupyter>=1.0.0
+notebook>=6.4.0
+
+# Visualization
+matplotlib>=3.3.0
+
+# Utilities
+python-dotenv>=0.19.0
+tqdm>=4.60.0
+
+# ==========================================
+# Installation Instructions
+# ==========================================
+# 1. Basic installation (CPU):
+#    pip install -r requirements.txt
+#
+# 2. With GPU support (CUDA):
+#    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#    pip install -r requirements.txt
+#
+# 3. Install specific versions:
+#    pip install -r requirements.txt --no-deps
+#    pip install numpy==1.23.0 torch==2.0.0
+#
+# 4. Update all packages:
+#    pip install --upgrade -r requirements.txt
