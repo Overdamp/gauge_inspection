@@ -8,10 +8,12 @@
 numpy>=1.20.0,<2.0
 opencv-python>=4.5.0
 pillow>=8.0.0
+scikit-image>=0.19.0
 
 # Deep Learning Framework
 torch>=1.9.0
 torchvision>=0.10.0
+transformers>=4.20.0
 
 # Object Detection and Segmentation (YOLOv8)
 ultralytics>=8.0.0
@@ -23,7 +25,7 @@ pyyaml>=5.4
 # OCR AND VISION
 # ==========================================
 # Optical Character Recognition
-doctr>=0.5.0
+python-doctr>=0.5.0
 
 # ==========================================
 # OPTIONAL DEPENDENCIES

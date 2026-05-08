@@ -103,6 +103,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.conda/
 
 # Spyder project settings
 .spyderproject
@@ -144,6 +145,8 @@ runs/
 *.png
 *.bmp
 *.jpeg
+
+#!docs/sample_output.png <<--  delete after testing
 
 # Large files that should not be committed
 *.db
