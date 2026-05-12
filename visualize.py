@@ -8,8 +8,8 @@ from libs.analog_gauge.segmentation import GaugeSegmentor
 def main():
     config = load_config("configs/config.yaml")
     
-    input_folder = "/home/engineer00/winworkspace/PTTEP/Objectdetection/crop_gauge_result/analog-gauge"        
-    output_folder = "/home/engineer00/winworkspace/PTTEP/AnalogGaugeReading/gauge-win-v3/segment_results"   
+    input_folder ="images/analog-gauge"        
+    output_folder = "results/segment_results"
     os.makedirs(input_folder, exist_ok=True)
     os.makedirs(output_folder, exist_ok=True)
 

@@ -1,0 +1,19 @@
+name: "doctr_det"
+platform: "onnxruntime_onnx"
+max_batch_size: 8
+
+input [
+  {
+    name: "x"
+    data_type: TYPE_FP32
+    dims: [ 3, 1024, 1024 ]
+  }
+]
+output [
+  {
+    name: "preds"
+    data_type: TYPE_FP32
+    dims: [ 1, 1024, 1024 ]
+  }
+]
+instance_group [ { count: 2, kind: KIND_GPU } ]
