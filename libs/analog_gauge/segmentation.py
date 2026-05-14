@@ -71,7 +71,7 @@ class GaugeSegmentor:
             n = min(len(xyxys), len(masks_xy_list))  # Protect N != M
             for i in range(n):
                 label = self.model.names[clss[i]]
-                mask_points = masks_xy_list[i].astype(int)
+                mask_points = masks_xy_list[i].astype(np.float32)
 
                 segmentations.append({
                     "bbox":  xyxys[i].tolist(),

@@ -73,40 +73,53 @@ class TritonPythonModel:
         return responses
 
     async def _process_analog_gauge(self, img):
-        # 1. Segmentation
-        self.logger.log_info(f"Sending to analog_seg, shape={img.shape}")
+        orig_h, orig_w = img.shape[:2]
+        SEG_SIZE = 640
+
+        # 1. Segmentation — resize เฉพาะตอนส่ง YOLO เพื่อเลี่ยงปัญหา Shared Memory (SHM) กับภาพขนาดใหญ่
+        img_for_seg = cv2.resize(img, (SEG_SIZE, SEG_SIZE))
+        self.logger.log_info(f"Sending to analog_seg, shape={img_for_seg.shape} (orig={img.shape})")
+        
         seg_req = pb_utils.InferenceRequest(
             model_name="analog_seg",
             requested_output_names=["SEG_JSON"],
-            inputs=[pb_utils.Tensor("IMAGE", img)]
+            inputs=[pb_utils.Tensor("IMAGE", img_for_seg)]
         )
         seg_res = await seg_req.async_exec()
         if seg_res.has_error():
             self.logger.log_error(f"analog_seg error: {seg_res.error().message()}")
             return {"error": "Segmentation failed"}, img
         
-        seg_json_tensor = pb_utils.get_output_tensor_by_name(seg_res, "SEG_JSON")
-        self.logger.log_info(f"analog_seg result tensor: {seg_json_tensor}")
-        seg_json_arr = seg_json_tensor.as_numpy()
-        self.logger.log_info(f"SEG_JSON array shape={seg_json_arr.shape}, size={seg_json_arr.size}")
+        seg_json_arr = pb_utils.get_output_tensor_by_name(seg_res, "SEG_JSON").as_numpy()
         
         if seg_json_arr.size == 0:
             self.logger.log_error("SEG_JSON tensor is empty!")
             return {"error": "Segmentation returned empty result"}, img
         
-        seg_json_str = seg_json_arr[0].decode('utf-8')
-        segmentations = json.loads(seg_json_str)
+        segmentations = json.loads(seg_json_arr[0].decode('utf-8'))
 
         if not segmentations:
             return {"error": "No segmentations found"}, img
 
+        # Scale พิกัดกลับมายังขนาดภาพ Original เพื่อให้การ Crop OCR และการคำนวณ Math แม่นยำที่สุด
+        sx = orig_w / SEG_SIZE
+        sy = orig_h / SEG_SIZE
+        for seg in segmentations:
+            if "mask" in seg and len(seg["mask"]) > 0:
+                seg["mask"] = [[pt[0]*sx, pt[1]*sy] for pt in seg["mask"]]
+            if "bbox" in seg and len(seg["bbox"]) == 4:
+                bx1, by1, bx2, by2 = seg["bbox"]
+                seg["bbox"] = [bx1*sx, by1*sy, bx2*sx, by2*sy]
+
+        self.logger.log_info(f"Segmentation OK: {len(segmentations)} objects, scaled to {orig_w}x{orig_h}")
+
         # 2. Ellipse Fitting
         ellipse_result = self._get_component_ellipse(segmentations)
 
-        # 3. OCR (Crop, SR, OCR)
+        # 3. OCR (Crop จากภาพ Original)
         ocr_results = await self._run_ocr_pipeline(img, segmentations)
 
-        # 4. Gauge Reading
+        # 4. Gauge Reading (บนภาพ Original)
         result_dict = self._get_gauge_reading(img, segmentations, ellipse_result, ocr_results)
         
         vis_img = result_dict.pop("debug_img", img)
@@ -326,6 +339,16 @@ class TritonPythonModel:
             r2 = result.get('r2_score', 0)
             clr = (0,150,0) if r2>=0.8 else (0,165,255) if r2>=0.5 else (0,0,255)
             cv2.putText(vis, txt, p, f, 0.7, clr, 2)
+            
+            # Add extra info: R2, pts, and direction (CW/CCW)
+            slope = result.get("slope", 0)
+            info = f"R2:{r2:.2f} | pts:{result.get('fit_points','?')} | {'CW' if slope > 0 else 'CCW'}"
+            (dw, dh), _ = cv2.getTextSize(info, f, 0.45, 1)
+            dp = (10, p[1] + dh + 10)
+            cv2.rectangle(vis, (dp[0]-2, dp[1]-dh-5), (dp[0]+dw+2, dp[1]+3), (255,255,255), -1)
+            cv2.putText(vis, info, dp, f, 0.45, (0,0,0), 1)
+        else:
+            cv2.putText(vis, "Calc Failed", (10, 30), f, 0.7, (0,0,255), 2)
         return vis
 
     def finalize(self):

@@ -1,0 +1,24 @@
+{
+    "value": 39.0,
+    "min_found": 40.0,
+    "max_found": 50.0,
+    "fit_points": 2,
+    "total_points_detected": 5,
+    "r2_score": 1.0,
+    "needle_tip": [
+        900.0,
+        665.625
+    ],
+    "slope": 0.21614812374413694,
+    "debug_cleaned_data": [
+        [
+            40.0,
+            299.2895452746642
+        ],
+        [
+            50.0,
+            345.55411526851435
+        ]
+    ],
+    "unit": "psig"
+}

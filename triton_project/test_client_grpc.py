@@ -22,7 +22,7 @@ def test_triton_grpc():
         if not image_files:
             print(f"❌ ไม่พบรูปภาพใน {input_dir}")
             return
-        test_image_path = image_files[4]
+        test_image_path = image_files[0]
         
     img = cv2.imread(test_image_path)
     if img is None:
@@ -36,11 +36,10 @@ def test_triton_grpc():
         print(f"❌ Error connecting to Triton: {e}")
         return
 
-    # Resize to 640x640 and send as UINT8 tensor
-    img_resized = cv2.resize(img, (640, 640))
-    img_batch = np.expand_dims(img_resized, axis=0)  # [1, 640, 640, 3]
+    # ส่งภาพ Original เต็มขนาด — ให้ Server จัดการ Resize ก่อนส่ง YOLO
+    img_batch = np.expand_dims(img, axis=0)  # [1, H_orig, W_orig, 3]
     
-    print(f"🔍 ภาพดั้งเดิม Shape = {img.shape}, ส่งเป็น Shape = {img_batch.shape}")
+    print(f"🔍 ส่งภาพ Original Shape = {img_batch.shape}")
 
     # Prepare inputs - 🌟 ใช้ grpcclient
     inputs = [
