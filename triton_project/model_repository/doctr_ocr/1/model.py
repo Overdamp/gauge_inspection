@@ -24,16 +24,26 @@ class TritonPythonModel:
     def execute(self, requests):
         responses = []
         for request in requests:
+            # รับภาพเข้ามา [Batch, H, W, 3] หรือ [H, W, 3]
             in_image = pb_utils.get_input_tensor_by_name(request, "IMAGE").as_numpy()
             
             try:
-                text, conf = self.ocr_model.predict(in_image)
+                # ถ้าเข้ามาเป็น 4 มิติ [N, H, W, 3] แสดงว่าเป็น Batch
+                if in_image.ndim == 4:
+                    images = [img for img in in_image]
+                    results = self.ocr_model.predict_batch(images)
+                else:
+                    results = [self.ocr_model.predict(in_image)]
+                
+                texts = [r[0] for r in results]
+                confs = [r[1] for r in results]
+                
             except Exception as e:
                 self.logger.log_error(f"OCR predict failed: {e}")
-                text, conf = "", 0.0
+                texts, confs = [""], [0.0]
 
-            text_tensor = pb_utils.Tensor("TEXT_RESULT", np.array([text], dtype=object))
-            conf_tensor = pb_utils.Tensor("CONFIDENCE", np.array([conf], dtype=np.float32))
+            text_tensor = pb_utils.Tensor("TEXT_RESULT", np.array(texts, dtype=object))
+            conf_tensor = pb_utils.Tensor("CONFIDENCE", np.array(confs, dtype=np.float32))
             
             responses.append(pb_utils.InferenceResponse(output_tensors=[text_tensor, conf_tensor]))
 

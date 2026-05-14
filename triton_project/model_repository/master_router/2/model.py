@@ -135,32 +135,44 @@ class TritonPythonModel:
             else:
                 x, y, w, h = cv2.boundingRect(mask_points.astype(np.float32))
                 bx1, by1, bx2, by2 = x, y, x+w, y+h
+            
             w_box, h_box = bx2 - bx1, by2 - by1
             pad_x, pad_y = max(10, int(w_box * 0.3)), max(10, int(h_box * 0.3))
             x1, y1, x2, y2 = max(0, bx1-pad_x), max(0, by1-pad_y), min(img_w, bx2+pad_x), min(img_h, by2+pad_y)
+            
             crop_img = frame[y1:y2, x1:x2].copy()
             if crop_img.size == 0: continue
             crop_img = self._preprocess_for_ocr(crop_img)
-            crop_img = cv2.resize(crop_img, (0, 0), fx=1.2, fy=1.2, interpolation=cv2.INTER_CUBIC)
-            crop_images_list.append(crop_img); seg_metadata_list.append({"class": seg["class"], "mask_center": mask_center})
+            
+            # บังคับ Resize เป็น 32x128 สำหรับ Batch OCR
+            crop_img = cv2.resize(crop_img, (128, 32), interpolation=cv2.INTER_CUBIC)
+            
+            crop_images_list.append(crop_img)
+            seg_metadata_list.append({"class": seg["class"], "mask_center": mask_center})
 
-        tasks = [self._async_sr_and_ocr(cimg) for cimg in crop_images_list]
-        ocr_batch_res = await asyncio.gather(*tasks)
-        return [{"class": m["class"], "text": r[0], "confidence": r[1], "mask_center": m["mask_center"]} 
-                for m, r in zip(seg_metadata_list, ocr_batch_res)]
+        if not crop_images_list: return []
 
-    async def _async_sr_and_ocr(self, crop_img):
-        sr_req = pb_utils.InferenceRequest(model_name="swin2sr", requested_output_names=["IMAGE_SR"], inputs=[pb_utils.Tensor("IMAGE", crop_img)])
-        sr_res = await sr_req.async_exec()
-        if not sr_res.has_error():
-            crop_img = pb_utils.get_output_tensor_by_name(sr_res, "IMAGE_SR").as_numpy()
-        ocr_req = pb_utils.InferenceRequest(model_name="doctr_ocr", requested_output_names=["TEXT_RESULT", "CONFIDENCE"], inputs=[pb_utils.Tensor("IMAGE", crop_img)])
+        # 🚀 ส่งไปทำ OCR แบบ Batch รวดเดียว (ข้าม Swin2SR เพื่อความเร็ว)
+        batch_tensor = np.stack(crop_images_list).astype(np.uint8)
+        ocr_req = pb_utils.InferenceRequest(
+            model_name="doctr_ocr", 
+            requested_output_names=["TEXT_RESULT", "CONFIDENCE"], 
+            inputs=[pb_utils.Tensor("IMAGE", batch_tensor)]
+        )
         ocr_res = await ocr_req.async_exec()
+        
+        ocr_results = []
         if not ocr_res.has_error():
-            text = pb_utils.get_output_tensor_by_name(ocr_res, "TEXT_RESULT").as_numpy()[0].decode('utf-8')
-            conf = pb_utils.get_output_tensor_by_name(ocr_res, "CONFIDENCE").as_numpy()[0]
-            return text, float(conf)
-        return "", 0.0
+            texts = pb_utils.get_output_tensor_by_name(ocr_res, "TEXT_RESULT").as_numpy()
+            confs = pb_utils.get_output_tensor_by_name(ocr_res, "CONFIDENCE").as_numpy()
+            for i in range(len(texts)):
+                ocr_results.append({
+                    "class": seg_metadata_list[i]["class"],
+                    "text": texts[i].decode('utf-8'),
+                    "confidence": float(confs[i]),
+                    "mask_center": seg_metadata_list[i]["mask_center"]
+                })
+        return ocr_results
 
     def _select_best_needle(self, needle_segs, center):
         if not needle_segs: return None

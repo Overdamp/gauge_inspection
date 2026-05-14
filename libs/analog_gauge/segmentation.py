@@ -25,10 +25,22 @@ class GaugeSegmentor:
 
     def _load_model(self):
         try:
-            if not os.path.exists(self.model_path):
-                raise FileNotFoundError(f"Segmentation Model file not found at: {self.model_path}")
+            # ตรวจสอบว่ามีไฟล์ TensorRT (.engine) หรือไม่
+            engine_path = self.model_path.replace(".pt", ".engine")
             
-            
+            # ถ้าเป็น Path สัมพัทธ์ ให้ลองหาจากตำแหน่งโปรเจกต์หลัก
+            if not os.path.isabs(engine_path):
+                # หาตำแหน่งโปรเจกต์ (ขึ้นไป 2 ระดับจากไฟล์นี้)
+                current_file_dir = os.path.dirname(os.path.abspath(__file__))
+                project_root = os.path.abspath(os.path.join(current_file_dir, "../../"))
+                alt_path = os.path.join(project_root, engine_path)
+                if os.path.exists(alt_path):
+                    engine_path = alt_path
+
+            if os.path.exists(engine_path):
+                self.model_path = engine_path
+                print(f"🚀 Found TensorRT engine: {self.model_path}. Using High-Performance mode.")
+
             self.model = YOLO(self.model_path,task='segment')
             print(f"Successfully loaded segmentation model from {self.model_path} on {self.device}")
             
@@ -71,7 +83,8 @@ class GaugeSegmentor:
             n = min(len(xyxys), len(masks_xy_list))  # Protect N != M
             for i in range(n):
                 label = self.model.names[clss[i]]
-                mask_points = masks_xy_list[i].astype(np.float32)
+                mask_points = masks_xy_list[i].astype(int)
+                #mask_points = masks_xy_list[i].astype(np.float32) เดี๋ยวลองใช้ float32 ดูว่าดีกว่าไหม
 
                 segmentations.append({
                     "bbox":  xyxys[i].tolist(),
