@@ -1,0 +1,7 @@
+{
+  "inference_request_id": "req-ag1-test-001",
+  "timestamp": "2026-05-15T13:30:00+07:00",
+  "inference_task": 1,
+  "image_uri": "/home/luke/gauge_inspection/images/analog-gauge/ag1.jpg",
+  "inference_payload": "{\"threshold_low\": 20.0, \"threshold_high\": 1500.0, \"unit\": \"psi\"}"
+}

@@ -73,13 +73,13 @@ def test_triton_version(version="2"):
             else:
                 print(f"⚠️ [{filename}] Error: {results.get('error', 'Unknown')}")
 
-            # บันทึกภาพ
-            img_bytes_out = vis_data[0]
-            if isinstance(img_bytes_out, (bytes, bytearray)) and len(img_bytes_out) > 0:
-                nparr = np.frombuffer(img_bytes_out, np.uint8)
-                vis_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-                if vis_img is not None:
-                    cv2.imwrite(os.path.join(output_dir, f"result_{filename}"), vis_img)
+            # # บันทึกภาพ (คอมเมนต์ออกเพื่อความเร็ว)
+            # img_bytes_out = vis_data[0]
+            # if isinstance(img_bytes_out, (bytes, bytearray)) and len(img_bytes_out) > 0:
+            #     nparr = np.frombuffer(img_bytes_out, np.uint8)
+            #     vis_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            #     if vis_img is not None:
+            #         cv2.imwrite(os.path.join(output_dir, f"result_{filename}"), vis_img)
 
         except Exception as e:
             print(f"❌ [{filename}] Error: {e}")
