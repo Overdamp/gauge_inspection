@@ -19,7 +19,7 @@ class NumpyEncoder(json.JSONEncoder):
 class TritonPythonModel:
     def initialize(self, args):
         self.logger = pb_utils.Logger
-        self.logger.log_info("Master Router V2 (High Precision) Initialized")
+        self.logger.log_info("Task Analog Gauge Router Initialized")
         self.fitter = EllipseFitter()
         self.calculator = GaugeCalculator()
 
@@ -30,19 +30,9 @@ class TritonPythonModel:
             img = image_tensor.as_numpy()
             if img.ndim == 4: img = img[0]
             
-            try:
-                params = request.parameters()
-                task_type_param = params.get("TASK_TYPE", None)
-                task_type = task_type_param.string_param if task_type_param else "analog_gauge"
-            except Exception:
-                task_type = "analog_gauge"
-            
             results, vis_img = {}, img.copy()
-            if task_type == "analog_gauge":
-                results, vis_img = await self._process_analog_gauge(img)
-            else:
-                results = {"error": f"Unknown task_type: {task_type}"}
-
+            results, vis_img = await self._process_analog_gauge(img)
+            
             _, buffer = cv2.imencode('.jpg', vis_img)
             img_bytes = buffer.tobytes()
             json_str = json.dumps(results, cls=NumpyEncoder)
@@ -53,18 +43,16 @@ class TritonPythonModel:
         return responses
 
     async def _process_analog_gauge(self, img):
-        # V2 High Precision: ส่งภาพ Original ไปเลยเพื่อให้ YOLOv8 (retina_masks=True) คืนพิกัดที่ละเอียดที่สุด
-        # ไม่ใช้การ Resize ใน master_router เพื่อเลี่ยงความคลาดเคลื่อนจากการ Upscale
-        self.logger.log_info(f"V2 High Precision: Sending Original Image to analog_seg, shape={img.shape}")
+        self.logger.log_info(f"Analog Gauge Router: Sending Original Image to shared_analog_seg, shape={img.shape}")
         
         seg_req = pb_utils.InferenceRequest(
-            model_name="analog_seg",
+            model_name="shared_analog_seg",
             requested_output_names=["SEG_JSON"],
             inputs=[pb_utils.Tensor("IMAGE", img)]
         )
         seg_res = await seg_req.async_exec()
         if seg_res.has_error():
-            self.logger.log_error(f"analog_seg error: {seg_res.error().message()}")
+            self.logger.log_error(f"shared_analog_seg error: {seg_res.error().message()}")
             return {"error": "Segmentation failed"}, img
         
         seg_json_arr = pb_utils.get_output_tensor_by_name(seg_res, "SEG_JSON").as_numpy()
@@ -73,8 +61,7 @@ class TritonPythonModel:
         if not segmentations:
             return {"error": "No segmentations found"}, img
 
-        # พิกัดที่ได้จะเป็น Original Space อยู่แล้ว เพราะ retina_masks=True ทำงานบนภาพต้นฉบับ
-        self.logger.log_info(f"V2 High Precision: Received {len(segmentations)} objects in original space.")
+        self.logger.log_info(f"Analog Gauge Router: Received {len(segmentations)} objects in original space.")
 
         ellipse_result = self._get_component_ellipse(segmentations)
         ocr_results = await self._run_ocr_pipeline(img, segmentations)
@@ -150,11 +137,20 @@ class TritonPythonModel:
                 for m, r in zip(seg_metadata_list, ocr_batch_res)]
 
     async def _async_sr_and_ocr(self, crop_img):
-        sr_req = pb_utils.InferenceRequest(model_name="swin2sr", requested_output_names=["IMAGE_SR"], inputs=[pb_utils.Tensor("IMAGE", crop_img)])
+        sr_req = pb_utils.InferenceRequest(
+            model_name="shared_swin2sr_optimizer",
+            requested_output_names=["IMAGE_SR"],
+            inputs=[pb_utils.Tensor("IMAGE", crop_img)]
+        )
         sr_res = await sr_req.async_exec()
         if not sr_res.has_error():
             crop_img = pb_utils.get_output_tensor_by_name(sr_res, "IMAGE_SR").as_numpy()
-        ocr_req = pb_utils.InferenceRequest(model_name="doctr_ocr", requested_output_names=["TEXT_RESULT", "CONFIDENCE"], inputs=[pb_utils.Tensor("IMAGE", crop_img)])
+            
+        ocr_req = pb_utils.InferenceRequest(
+            model_name="shared_doctr_ocr",
+            requested_output_names=["TEXT_RESULT", "CONFIDENCE"],
+            inputs=[pb_utils.Tensor("IMAGE", crop_img)]
+        )
         ocr_res = await ocr_req.async_exec()
         if not ocr_res.has_error():
             text = pb_utils.get_output_tensor_by_name(ocr_res, "TEXT_RESULT").as_numpy()[0].decode('utf-8')

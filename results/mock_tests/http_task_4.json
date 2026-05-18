@@ -1,0 +1,33 @@
+{
+    "inference_request_id": "req-gas-mock-001",
+    "timestamp": "2026-05-18T16:33:22.960771+07:00",
+    "image_uri": "/home/luke/gauge_inspection/images/analog-gauge/ag1.jpg",
+    "inference_task": 4,
+    "results": [
+        {
+            "detection_id": 1,
+            "inference_status": "SUCCESS",
+            "inference_error": null,
+            "object_type": "gas_monitoring_area",
+            "object_condition": "NORMAL",
+            "primary_detection": {
+                "class_name": "gas_monitoring_area",
+                "confidence": 1.0,
+                "bbox": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "components": {},
+            "ocr": [],
+            "outputs": {
+                "gas_detected": true,
+                "confidence": 0.92
+            },
+            "feedback": [],
+            "debug": {}
+        }
+    ]
+}

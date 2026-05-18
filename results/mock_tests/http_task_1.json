@@ -1,0 +1,42 @@
+{
+    "inference_request_id": "req-analog-actual-001",
+    "timestamp": "2026-05-18T16:33:22.781487+07:00",
+    "image_uri": "/home/luke/gauge_inspection/images/analog-gauge/ag1.jpg",
+    "inference_task": 1,
+    "results": [
+        {
+            "detection_id": 1,
+            "inference_status": "SUCCESS",
+            "inference_error": null,
+            "object_type": "analog_gauge",
+            "object_condition": "NORMAL",
+            "primary_detection": {
+                "class_name": "analog_gauge",
+                "confidence": 1.0,
+                "bbox": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "components": {},
+            "ocr": [],
+            "outputs": {
+                "gauge_reading": 1405.3777397131216,
+                "unit": "",
+                "confidence": 0.95,
+                "gauge_level": "Normal"
+            },
+            "feedback": [],
+            "debug": {
+                "r2_score": 0.9975802056869034,
+                "fit_points": 4,
+                "needle_tip": [
+                    1013.0,
+                    230.0
+                ]
+            }
+        }
+    ]
+}

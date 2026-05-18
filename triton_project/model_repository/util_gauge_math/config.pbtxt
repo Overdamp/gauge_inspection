@@ -1,0 +1,26 @@
+name: "util_gauge_math"
+backend: "python"
+max_batch_size: 0
+
+input [
+  {
+    name: "INPUT_DATA"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+
+output [
+  {
+    name: "OUTPUT_DATA"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_GPU
+  }
+]

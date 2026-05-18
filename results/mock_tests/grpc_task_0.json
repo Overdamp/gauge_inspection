@@ -1,0 +1,39 @@
+{
+    "inference_request_id": "req-digital-mock-001",
+    "timestamp": "2026-05-18T16:33:23.098293+07:00",
+    "image_uri": "/home/luke/gauge_inspection/images/analog-gauge/ag1.jpg",
+    "inference_task": 0,
+    "results": [
+        {
+            "detection_id": 1,
+            "inference_status": "SUCCESS",
+            "inference_error": null,
+            "object_type": "digital_gauge",
+            "object_condition": "NORMAL",
+            "primary_detection": {
+                "class_name": "digital_gauge",
+                "confidence": 1.0,
+                "bbox": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "components": {},
+            "ocr": [],
+            "outputs": {
+                "gauge_reading": 120.5,
+                "unit": "psi",
+                "confidence": 0.98,
+                "gauge_level": "Normal"
+            },
+            "feedback": [],
+            "debug": {
+                "r2_score": null,
+                "fit_points": null,
+                "needle_tip": null
+            }
+        }
+    ]
+}

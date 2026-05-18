@@ -1,0 +1,34 @@
+{
+    "inference_request_id": "req-safety-mock-001",
+    "timestamp": "2026-05-18T16:33:25.900964+07:00",
+    "image_uri": "/home/luke/gauge_inspection/images/analog-gauge/ag1.jpg",
+    "inference_task": 5,
+    "results": [
+        {
+            "detection_id": 1,
+            "inference_status": "SUCCESS",
+            "inference_error": null,
+            "object_type": "safety_incident_area",
+            "object_condition": "NORMAL",
+            "primary_detection": {
+                "class_name": "safety_incident_area",
+                "confidence": 1.0,
+                "bbox": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "components": {},
+            "ocr": [],
+            "outputs": {
+                "fire_detected": false,
+                "smoke_detected": true,
+                "confidence": 0.87
+            },
+            "feedback": [],
+            "debug": {}
+        }
+    ]
+}

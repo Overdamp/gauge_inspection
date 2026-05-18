@@ -39,12 +39,16 @@ class TritonPythonModel:
             
             # Read TASK_TYPE from request parameters (sent as HTTP parameter)
             try:
-                params = request.parameters()
-                task_type_param = params.get("TASK_TYPE", None)
-                if task_type_param is not None:
-                    task_type = task_type_param.string_param
-                else:
-                    task_type = "analog_gauge"
+                params_str = request.parameters()
+                # Parse JSON string if it is serialized
+                params = json.loads(params_str) if isinstance(params_str, str) else params_str
+                task_type = "analog_gauge"
+                if isinstance(params, dict):
+                    task_type_param = params.get("TASK_TYPE", None)
+                    if isinstance(task_type_param, dict):
+                        task_type = task_type_param.get("string_param", "analog_gauge")
+                    elif isinstance(task_type_param, str):
+                        task_type = task_type_param
             except Exception:
                 task_type = "analog_gauge"
             
@@ -55,6 +59,53 @@ class TritonPythonModel:
 
             if task_type == "analog_gauge":
                 results, vis_img = await self._process_analog_gauge(img)
+            elif task_type == "digital_gauge":
+                results = {
+                    "value": 120.5,
+                    "unit": "psi",
+                    "confidence": 0.98,
+                    "gauge_level": "Normal",
+                    "message": "V1 Mock: Digital Gauge inference succeeded"
+                }
+                cv2.rectangle(vis_img, (50, 50), (250, 250), (0, 255, 0), 3)
+                cv2.putText(vis_img, "MOCK DIGITAL GAUGE: 120.5 psi", (60, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            elif task_type == "abnormality":
+                results = {
+                    "object_condition": "ABNORMAL",
+                    "abnormality_type": "oil_leak",
+                    "severity": "HIGH",
+                    "confidence": 0.89,
+                    "message": "V1 Mock: Abnormality detection succeeded"
+                }
+                cv2.rectangle(vis_img, (100, 150), (350, 400), (0, 0, 255), 3)
+                cv2.putText(vis_img, "MOCK OIL LEAK (HIGH RISK)", (110, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            elif task_type == "water_level":
+                results = {
+                    "water_level": 75.4,
+                    "sump_type": "vertical_tube",
+                    "confidence": 0.96,
+                    "message": "V1 Mock: Water level measurement succeeded"
+                }
+                h, w = vis_img.shape[:2]
+                cv2.line(vis_img, (100, int(h * 0.25)), (w - 100, int(h * 0.25)), (255, 0, 0), 4)
+                cv2.putText(vis_img, "MOCK WATER LEVEL: 75.4%", (110, int(h * 0.25) - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+            elif task_type == "gas_detection":
+                results = {
+                    "gas_detected": True,
+                    "confidence": 0.92,
+                    "message": "V1 Mock: Gas leakage detection succeeded"
+                }
+                cv2.circle(vis_img, (300, 300), 100, (0, 255, 255), -1)
+                cv2.putText(vis_img, "MOCK GAS LEAK DETECTED", (150, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            elif task_type == "scanning":
+                results = {
+                    "fire_detected": False,
+                    "smoke_detected": True,
+                    "confidence": 0.87,
+                    "message": "V1 Mock: Fire/smoke safety scanning succeeded"
+                }
+                cv2.rectangle(vis_img, (150, 100), (450, 400), (200, 200, 200), 3)
+                cv2.putText(vis_img, "MOCK SMOKE DETECTED", (160, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (128, 128, 128), 2)
             else:
                 results = {"error": f"Unknown task_type: {task_type}"}
 

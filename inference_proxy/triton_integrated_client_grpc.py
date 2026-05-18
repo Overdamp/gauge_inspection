@@ -58,13 +58,16 @@ def run_inference_v8_grpc(payload_a: dict, triton_url: str = "localhost:8001"):
             grpcclient.InferRequestedOutput("JSON_RESULT"),
         ]
 
+        # เตรียม Parameters
+        request_params = {"TASK_TYPE": triton_task}
+
         # เรียกใช้งาน Inference
-        # ใน gRPC การส่ง parameters จะทำผ่านหลักการเดียวกัน
         response = client.infer(
             model_name=model_name,
             inputs=inputs,
             outputs=outputs,
-            client_timeout=30.0 # ตั้งเวลา Timeout ไว้ 30 วินาที
+            client_timeout=30.0, # ตั้งเวลา Timeout ไว้ 30 วินาที
+            parameters=request_params
         )
 
         # ดึงผลลัพธ์ดิบออกมา

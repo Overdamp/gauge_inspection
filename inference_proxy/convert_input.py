@@ -14,12 +14,12 @@ logger = logging.getLogger("ConvertInput")
 # อ้างอิงตามเอกสาร AI PTTEP.md (Payload B Section)
 # การจับคู่ Task ID กับชื่อโมเดล และ Parameter สำหรับ Triton
 TASK_CONFIG = {
-    0: {"model": "master_router", "triton_task": "digital_gauge"},
-    1: {"model": "master_router", "triton_task": "analog_gauge"},
-    2: {"model": "master_router", "triton_task": "abnormality"},
-    3: {"model": "master_router", "triton_task": "water_level"},
-    4: {"model": "master_router", "triton_task": "gas_detection"},
-    5: {"model": "master_router", "triton_task": "scanning"}
+    0: {"model": "task_digital_gauge_router", "triton_task": "digital_gauge"},
+    1: {"model": "task_analog_gauge_router", "triton_task": "analog_gauge"},
+    2: {"model": "task_abnormality_router", "triton_task": "abnormality"},
+    3: {"model": "task_water_level_router", "triton_task": "water_level"},
+    4: {"model": "task_gas_detection_router", "triton_task": "gas_detection"},
+    5: {"model": "task_general_scan_router", "triton_task": "scanning"}
 }
 
 def convert_payload_a_to_b(payload_a: Dict[str, Any]) -> Dict[str, Any]:
