@@ -1,0 +1,26 @@
+name: "shared_swin2sr_plan"
+platform: "tensorrt_plan"
+max_batch_size: 0
+
+input [
+  {
+    name: "pixel_values"
+    data_type: TYPE_FP32
+    dims: [ 1, 3, 64, 64 ]
+  }
+]
+
+output [
+  {
+    name: "reconstruction"
+    data_type: TYPE_FP32
+    dims: [ 1, 3, 128, 128 ]
+  }
+]
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_GPU
+  }
+]

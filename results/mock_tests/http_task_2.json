@@ -1,6 +1,6 @@
 {
     "inference_request_id": "req-abnormality-mock-001",
-    "timestamp": "2026-05-18T16:33:22.839546+07:00",
+    "timestamp": "2026-05-19T15:54:58.346193+07:00",
     "image_uri": "/home/luke/gauge_inspection/images/analog-gauge/ag1.jpg",
     "inference_task": 2,
     "results": [

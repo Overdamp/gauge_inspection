@@ -63,3 +63,25 @@ class DoctrOCR:
             pred_text, conf = output[0]
             
         return pred_text, conf
+
+    def predict_batch(self, images: list):
+        if not images:
+            return []
+        
+        tensors = []
+        for img_bgr in images:
+            img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+            tensors.append(self.transforms(img_rgb))
+            
+        img_tensor = torch.stack(tensors).to(self.device)
+        
+        with torch.no_grad():
+            output = self.model(img_tensor, target=None, return_preds=True)
+            
+        results = []
+        preds = output['preds'] if 'preds' in output else output
+        for i in range(len(images)):
+            pred_text, conf = preds[i]
+            results.append((pred_text, float(conf)))
+            
+        return results

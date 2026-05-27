@@ -1,6 +1,6 @@
 name: "shared_swin2sr_optimizer"
 backend: "python"
-max_batch_size: 0
+max_batch_size: 16
 
 input [
   {

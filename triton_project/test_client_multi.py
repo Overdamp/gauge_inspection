@@ -9,7 +9,7 @@ import time
 
 def test_triton_version(version="2"):
     url = "localhost:8000"  # HTTP port
-    model_name = "master_router"
+    model_name = "task_analog_gauge_router"
     model_version = version # เลือก version ได้ที่นี่ ("1" หรือ "2")
 
     input_dir = "/home/luke/gauge_inspection/images/analog-gauge"

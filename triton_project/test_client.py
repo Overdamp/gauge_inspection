@@ -9,7 +9,7 @@ import time
 
 def test_triton_batch():
     url = "localhost:8000"  # HTTP port
-    model_name = "master_router"
+    model_name = "task_analog_gauge_router"
 
     input_dir = "/home/luke/gauge_inspection/images/analog-gauge"
     output_dir = "/home/luke/gauge_inspection/results/triton_results"

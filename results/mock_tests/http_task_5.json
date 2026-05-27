@@ -1,6 +1,6 @@
 {
     "inference_request_id": "req-safety-mock-001",
-    "timestamp": "2026-05-18T16:33:23.018589+07:00",
+    "timestamp": "2026-05-19T15:54:58.694926+07:00",
     "image_uri": "/home/luke/gauge_inspection/images/analog-gauge/ag1.jpg",
     "inference_task": 5,
     "results": [

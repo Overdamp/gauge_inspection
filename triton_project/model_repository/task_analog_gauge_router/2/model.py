@@ -22,7 +22,7 @@ class NumpyEncoder(json.JSONEncoder):
 class TritonPythonModel:
     def initialize(self, args):
         self.logger = pb_utils.Logger
-        self.logger.log_info("Task Analog Gauge Router Initialized")
+        self.logger.log_info("Task Analog Gauge Router Version 2 Initialized")
         self.fitter = EllipseFitter()
         self.calculator = GaugeCalculator()
 
@@ -60,7 +60,7 @@ class TritonPythonModel:
         return img, r, (dw, dh)
 
     async def _process_analog_gauge(self, img):
-        self.logger.log_info(f"Analog Gauge Router V1: Sending Original Image to shared_analog_seg ONNX V1, shape={img.shape}")
+        self.logger.log_info(f"Analog Gauge Router V2: Sending Original Image to shared_analog_seg ONNX V2, shape={img.shape}")
         
         oh, ow = img.shape[:2]
         
@@ -73,7 +73,7 @@ class TritonPythonModel:
         
         seg_req = pb_utils.InferenceRequest(
             model_name="shared_analog_seg",
-            model_version=1,
+            model_version=2,
             requested_output_names=["output0", "output1"],
             inputs=[pb_utils.Tensor("images", img_batch)]
         )
@@ -148,10 +148,34 @@ class TritonPythonModel:
 
         self.logger.log_info(f"Analog Gauge Router: Received {len(segmentations)} objects in original space.")
 
+        segs_summary = [{"class": s["class"], "conf": s["conf"], "bbox": s["bbox"]} for s in segmentations]
+        self.logger.log_info(f"DEBUG: segmentations_summary={segs_summary}")
         ellipse_result = self._get_component_ellipse(segmentations)
         ocr_results = await self._run_ocr_pipeline(img, segmentations)
+        self.logger.log_info(f"DEBUG: ocr_results={ocr_results}")
         result_dict = self._get_gauge_reading(img, segmentations, ellipse_result, ocr_results)
         
+        # Save debug JSON for analysis
+        try:
+            import os
+            os.makedirs("/home/luke/gauge_inspection/debug_output", exist_ok=True)
+            with open("/home/luke/gauge_inspection/debug_output/debug_triton_ag5.json", "w") as f:
+                json.dump({
+                    "segmentations": [{k: v for k, v in s.items() if k != "mask"} for s in segmentations],
+                    "ocr_results": ocr_results,
+                    "ellipse_result": [{k: v for k, v in e.items() if k != "mask"} for e in ellipse_result],
+                    "result_dict": {k: v for k, v in result_dict.items() if k != "debug_img"}
+                }, f, indent=2, cls=NumpyEncoder)
+            with open("/home/luke/gauge_inspection/debug_output/debug_triton_ag5_full.json", "w") as f:
+                json.dump({
+                    "segmentations": segmentations,
+                    "ocr_results": ocr_results,
+                    "ellipse_result": ellipse_result,
+                    "result_dict": {k: v for k, v in result_dict.items() if k != "debug_img"}
+                }, f, indent=2, cls=NumpyEncoder)
+        except Exception as e:
+            self.logger.log_error(f"Failed to save debug JSON: {e}")
+            
         vis_img = result_dict.pop("debug_img", img)
         return result_dict, vis_img
 
@@ -316,6 +340,7 @@ class TritonPythonModel:
     def _get_gauge_reading(self, crop_img, segmentations, ellipse_result, ocr_results):
         if not ellipse_result: return {"error": "No ellipse", "debug_img": crop_img}
         center = ellipse_result[0]["center"]
+        self.logger.log_info(f"DEBUG: center={center}, class={ellipse_result[0].get('class')}")
         needle_mask = []
         needle_cands = [s for s in segmentations if s["class"] == "needle"]
         best_needle = self._select_best_needle(needle_cands, center)
